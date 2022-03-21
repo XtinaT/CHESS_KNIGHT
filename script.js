@@ -52,41 +52,41 @@ function chooseStartPosition () {
   }
 }
 
-let i = moves[0][0];
-let j = moves[0][1];
 
-let possibleMoves = [
-  [i-1,j+2],
-  [i+1,j+2],
-  [i+2,j+1],
-  [i+2,j-1],
-  [i+1,j-2],
-  [i-1,j-2],
-  [i-2,j-1],
-  [i-2,j+1],
-];
 
  function findPossibleMoves(v,i,a) {
    return (v[0]>=0&&v[0]<size&&v[1]>=0&&v[1]<size&&board[v[0]][v[1]]!=1);
  }
 
- function countNextMoves(array) {
-    return array.length
- }
 
  let nextMoves;
  let nextCoords;
-
+ let nextX;
+ let nextY;
+ let nextNextMoves;
+ let i = moves[0][0];
+ let j = moves[0][1];
+ board[i][j] = 1;
 
  function tryMove() {
-  board[i][j] = 1;
+  let index = 0;
+  let possibleMoves = [
+    [i-1,j+2],
+    [i+1,j+2],
+    [i+2,j+1],
+    [i+2,j-1],
+    [i+1,j-2],
+    [i-1,j-2],
+    [i-2,j-1],
+    [i-2,j+1],
+  ];
   nextMoves = possibleMoves.filter(findPossibleMoves);
   let numberOfNextMoves = [];
   let nextVars;
-  function whatToDoNext() {
+  function testNextMoves() {
     for (let i=0;i<nextMoves.length;i++) {
-      let nextX = nextMoves[i][1];
-      let nextY = nextMoves[i][0];
+      nextX = nextMoves[i][1];
+      nextY = nextMoves[i][0];
       nextVars = [
         [nextY-1,nextX+2],
         [nextY+1,nextX+2],
@@ -97,86 +97,38 @@ let possibleMoves = [
         [nextY-2,nextX-1],
         [nextY-2,nextX+1],
       ];
-      let nextNextMoves = nextVars.filter(findPossibleMoves);
-      console.log(nextNextMoves);
+      nextNextMoves = nextVars.filter(findPossibleMoves);
       numberOfNextMoves.push(nextNextMoves.length);
     }
     return numberOfNextMoves;
   }
-  numberOfNextMoves = whatToDoNext();
-  console.log(numberOfNextMoves);
+  numberOfNextMoves = testNextMoves();
 
-  let length =  numberOfNextMoves.length;
+  let count =  numberOfNextMoves.length;
   let min = numberOfNextMoves[0];
-  let index = 0;
-  while(length--) {
-    if(numberOfNextMoves[length] < min) {
-      min = numberOfNextMoves[length];
-      index = length;
+  
+  while(count--) {
+    if(numberOfNextMoves[count] < min) {
+      min = numberOfNextMoves[count];
+      index = count;
     }
   }
-  console.log(numberOfNextMoves[index]);
 
-  //board[nextVars[index][0]][nextVars[index][1]] = 1;
+  board[nextMoves[index][0]][nextMoves[index][1]] = 1;
+  moves.push(nextMoves[index]);
+  nextX = nextMoves[index][1];
+  nextY = nextMoves[index][0];
+  i = moves[moves.length-1][0];
+  j = moves[moves.length-1][1];
 }
 
 tryMove();
-console.log(board);
-//console.log(board);
-//console.log(nextMoves);
 
-//console.log(moves);
-//console.log(possibleMoves);
-//console.log(nextMoves);
-
-/*function findSolution(i) {
-  for (let j = 0; j < size; j++) {
-    if (board[i][j] == 0) {
-      tryQueen(i, j);
-
-      if (i == size - 1) {
-        writeDownSolutions();
-        removeQueen(i, j);
-      } else {
-        findSolution(i + 1);
-        removeQueen(i, j);
-      }
-    }
-  }
-}
-findSolution(0);*/
-
-/*function tryQueen(i, j) {
-  let x = i - j;
-  let y = i + j;
-  for (let k = 0; k < size; k++) {
-    board[i][k] += 1;
-    board[k][j] += 1;
-    if (k + x >= 0 && k + x < size) {
-      board[k + x][k] += 1;
-    }
-    if (y - k >= 0 && y - k < size) {
-      board[y - k][k] += 1;
-    }
-  }
-  board[i][j] = -1;
+while (nextNextMoves.length>0) {
+  tryMove();
 }
 
-/*function removeQueen(i, j) {
-  let x = i - j;
-  let y = i + j;
-  for (let k = 0; k < size; k++) {
-    board[i][k] -= 1;
-    board[k][j] -= 1;
-    if (k + x >= 0 && k + x < size) {
-      board[k + x][k] -= 1;
-    }
-    if (y - k >= 0 && y - k < size) {
-      board[y - k][k] -= 1;
-    }
-  }
-  board[i][j] = 0;
-}*/
+
 let table = document.getElementById("CHESSTABLE");
 let knight = {
   size: 54,
@@ -209,13 +161,15 @@ let k = 0;
 function showMoves(e) {
   e = e || window.event;
   e.preventDefault();
-  
+  if (moves.length==64) {
+    alert ('Путь найден!');
+  } else alert ('Неудача! Попробуйте еще раз!');
 
     if (timer) {
       clearInterval(timer);
       timer = 0;
     }
-    timer = setInterval(move, 500); 
+    timer = setInterval(move, 200); 
     
     function move() {
       if (k==moves.length-1) {
@@ -224,8 +178,8 @@ function showMoves(e) {
       };
       knight.posX = moves[k][1];
       knight.posY = moves[k][0];
-      console.log(knight.posY, knight.posX);
       table.rows[knight.posY].cells[knight.posX].textContent = `${k + 1}`;
+      table.rows[knight.posY].cells[knight.posX].style.backgroundColor = '#FAFBC5';
       knight.set();
       k++;
     } 
