@@ -1,27 +1,23 @@
 "use strict";
-var size = 8;
-var pictureWidth = 54;
-var moves = [
-  [0,0],
-  [0,1],
-  [0,2],
-];
-var board = [];
+let size = 8;
+let pictureWidth = 54;
+let moves = [];
+let board = [];
 
-for (var i = 0; i < size; i++) {
+for (let i = 0; i < size; i++) {
   board[i] = [];
-  for (var j = 0; j < size; j++) {
+  for (let j = 0; j < size; j++) {
     board[i][j] = 0;
   }
 }
 
 function buildBoard(size) {
-  var table = document.getElementById("CHESSTABLE");
+  let table = document.getElementById("CHESSTABLE");
   table.style.position = "relative";
-  for (var i = 0; i < size; i++) {
-    var tr = document.createElement("tr");
-    for (var j = 0; j < size; j++) {
-      var td = document.createElement("td");
+  for (let i = 0; i < size; i++) {
+    let tr = document.createElement("tr");
+    for (let j = 0; j < size; j++) {
+      let td = document.createElement("td");
       tr.appendChild(td);
     }
     table.appendChild(tr);
@@ -30,149 +26,164 @@ function buildBoard(size) {
 
 buildBoard(size);
 
-/*function writeDownSolutions() {
-  var arr = [];
-  for (var i = 0; i < size; i++) {
-    for (var j = 0; j < size; j++) {
-      if (board[i][j] == -1) {
-        arr.push([i, j]);
-      }
-    }
+chooseStartPosition();
+
+function randomDiap(n,m) {
+  return Math.floor(Math.random()*(m-n+1))+n;
+}
+function chooseStartPosition () {
+  let startPosition = randomDiap(1,4);
+  switch (startPosition) {
+    case 1: 
+      moves.push([0,0]);
+      break;
+
+    case 2: 
+      moves.push([0,7]);
+      break; 
+
+    case 3: 
+      moves.push([7,0]);
+      break; 
+
+    case 4: 
+      moves.push([7,7]);
+      break;          
   }
-  solutions.push(arr);
 }
 
-function findSolution(i) {
-  for (var j = 0; j < size; j++) {
-    if (board[i][j] == 0) {
-      tryQueen(i, j);
 
-      if (i == size - 1) {
-        writeDownSolutions();
-        removeQueen(i, j);
-      } else {
-        findSolution(i + 1);
-        removeQueen(i, j);
-      }
+
+ function findPossibleMoves(v,i,a) {
+   return (v[0]>=0&&v[0]<size&&v[1]>=0&&v[1]<size&&board[v[0]][v[1]]!=1);
+ }
+
+
+ let nextMoves;
+ let nextCoords;
+ let nextX;
+ let nextY;
+ let nextNextMoves;
+ let i = moves[0][0];
+ let j = moves[0][1];
+ board[i][j] = 1;
+
+ function tryMove() {
+  let index = 0;
+  let possibleMoves = [
+    [i-1,j+2],
+    [i+1,j+2],
+    [i+2,j+1],
+    [i+2,j-1],
+    [i+1,j-2],
+    [i-1,j-2],
+    [i-2,j-1],
+    [i-2,j+1],
+  ];
+  nextMoves = possibleMoves.filter(findPossibleMoves);
+  let numberOfNextMoves = [];
+  let nextVars;
+  function testNextMoves() {
+    for (let i=0;i<nextMoves.length;i++) {
+      nextX = nextMoves[i][1];
+      nextY = nextMoves[i][0];
+      nextVars = [
+        [nextY-1,nextX+2],
+        [nextY+1,nextX+2],
+        [nextY+2,nextX+1],
+        [nextY+2,nextX-1],
+        [nextY+1,nextX-2],
+        [nextY-1,nextX-2],
+        [nextY-2,nextX-1],
+        [nextY-2,nextX+1],
+      ];
+      nextNextMoves = nextVars.filter(findPossibleMoves);
+      numberOfNextMoves.push(nextNextMoves.length);
+    }
+    return numberOfNextMoves;
+  }
+  numberOfNextMoves = testNextMoves();
+
+  let count =  numberOfNextMoves.length;
+  let min = numberOfNextMoves[0];
+  
+  while(count--) {
+    if(numberOfNextMoves[count] < min) {
+      min = numberOfNextMoves[count];
+      index = count;
     }
   }
+
+  board[nextMoves[index][0]][nextMoves[index][1]] = 1;
+  moves.push(nextMoves[index]);
+  nextX = nextMoves[index][1];
+  nextY = nextMoves[index][0];
+  i = moves[moves.length-1][0];
+  j = moves[moves.length-1][1];
 }
-findSolution(0);
 
-function tryQueen(i, j) {
-  var x = i - j;
-  var y = i + j;
-  for (var k = 0; k < size; k++) {
-    board[i][k] += 1;
-    board[k][j] += 1;
-    if (k + x >= 0 && k + x < size) {
-      board[k + x][k] += 1;
-    }
-    if (y - k >= 0 && y - k < size) {
-      board[y - k][k] += 1;
-    }
-  }
-  board[i][j] = -1;
+tryMove();
+
+while (nextNextMoves.length>0) {
+  tryMove();
 }
 
-function removeQueen(i, j) {
-  var x = i - j;
-  var y = i + j;
-  for (var k = 0; k < size; k++) {
-    board[i][k] -= 1;
-    board[k][j] -= 1;
-    if (k + x >= 0 && k + x < size) {
-      board[k + x][k] -= 1;
-    }
-    if (y - k >= 0 && y - k < size) {
-      board[y - k][k] -= 1;
-    }
-  }
-  board[i][j] = 0;
-}
 
-function showSolutions(e) {
-  e = e || window.event;
-  e.preventDefault();
-  var span1 = document.getElementById("span1");
-  var div = document.getElementById("div");
-  div.style.display = "block";
-  var string = "";
-  for (var i = 0; i < solutions.length; i++) {
-    var str = "";
-    for (var j = 0; j < size; j++) {
-      str += `(${solutions[i][j]})`;
-    }
-    string += `<br/> ${i + 1}) ${str}`;
-  }
-  span1.textContent = `Количество найденных вариантов:\n ${solutions.length}`;
-  div.innerHTML = string;
-}*/
 let table = document.getElementById("CHESSTABLE");
+let knight = {
+  size: 54,
+  position: "absolute",
+  src: "knight.png",
+  id: "knight",
+  posX: moves[0][1],
+  posY: moves[0][0],
+  isCreated: false,
+  create: function () {
+    if (!this.isCreated) {
+      let img = document.createElement("img");
+      img.setAttribute("src", this.src);
+      img.setAttribute("id", this.id);
+      img.style.position = this.position;
+      table.appendChild(img);
+    }
+    this.isCreated = true;
+  },
+  set: function () {
+    let img = document.getElementById("knight");
+    img.style.left = this.size * this.posX + "px";
+    img.style.top = this.size * this.posY + "px";
+  },
+};
+knight.create();
+knight.set();
+let timer = 0;
+let k = 0;
 function showMoves(e) {
   e = e || window.event;
   e.preventDefault();
-  createKnight();
-  setKnight();
-  /*for (let k = 0; k < size; k++) {
-    for (let l = 0; l < size; l++) {
-      var td = table.rows[k].cells[l];
-      td.style.backgroundColor = "";
-    }*/
-  }
-  
-  
-  function createKnight() {
-    let img = document.createElement("img");
-    img.setAttribute("src", "knight.png");
-    img.setAttribute("id", "knight");
-    img.style.position = "absolute";
-    table.appendChild(img);
-  }
+  if (moves.length==64) {
+    alert ('Путь найден!');
+  } else alert ('Неудача! Попробуйте еще раз!');
 
-  function setKnight() {
-    let img = document.getElementById("knight");
-    img.style.left = pictureWidth * moves[0][1] + "px";
-    img.style.top = pictureWidth * moves[0][0] + "px";
-  }
-
-   let knight = {
-     size:54,
-     position:absolute,
-     posX:moves[1],
-     posY:moves[0],
+    if (timer) {
+      clearInterval(timer);
+      timer = 0;
+    }
+    timer = setInterval(move, 200); 
     
+    function move() {
+      if (k==moves.length-1) {
+        clearInterval(timer);
+        timer = 0;
+      };
+      knight.posX = moves[k][1];
+      knight.posY = moves[k][0];
+      table.rows[knight.posY].cells[knight.posX].textContent = `${k + 1}`;
+      table.rows[knight.posY].cells[knight.posX].style.backgroundColor = '#FAFBC5';
+      knight.set();
+      k++;
+    } 
+}
 
-   } 
-/* function showThreatPlaces(e) {
-  e = e || window.event;
-  e.preventDefault();
-  var self = this;
-  var j = self.offsetLeft / pictureWidth;
-  var i = self.offsetTop / pictureWidth;
-  var x = i - j;
-  var y = i + j;
-  var table = document.getElementById("CHESSTABLE");
-  for (var k = 0; k < size; k++) {
-    for (var l = 0; l < size; l++) {
-      var td = table.rows[k].cells[l];
-      td.style.backgroundColor = "";
-    }
-  }
-  for (var k = 0; k < size; k++) {
-    var tdh = table.rows[i].cells[k];
-    var tdv = table.rows[k].cells[j];
-    tdh.style.backgroundColor = "#A9CCEE";
-    tdv.style.backgroundColor = "#A9CCEE";
-    if (k + x >= 0 && k + x < size) {
-      var diag1 = table.rows[k + x].cells[k];
-    }
-    if (y - k >= 0 && y - k < size) {
-      var diag2 = table.rows[y - k].cells[k];
-    }
-    if (diag1) diag1.style.backgroundColor = "#A9CCEE";
-    if (diag2) diag2.style.backgroundColor = "#A9CCEE";
-  }
 
-}*/
 
