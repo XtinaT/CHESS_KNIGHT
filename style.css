@@ -1,6 +1,9 @@
 table {
         border: solid black;
         border-collapse: collapse;
+        color: #8BE7ED;
+        font-size:2em;
+        text-align:center;
       }
       td {
         border: solid black;
